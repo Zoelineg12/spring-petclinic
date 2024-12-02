@@ -1,0 +1,54 @@
+image: laurentgrangeau/oc-devops:23.37
+
+stages:
+  - compile
+  - test
+  - quality
+  - package
+
+variables:
+  MAVEN_OPTS: "-s $CI_PROJECT_DIR/ci-settings.xml"
+
+cache:
+  paths:
+    - .m2/repository
+
+compile:
+  stage: compile
+  script:
+    - mvn compile
+  only:
+    - main
+
+test:
+  stage: test
+  script:
+    - mvn test
+  only:
+    - main
+
+quality:
+  stage: quality
+  script:
+    - mvn verify
+    - mvn sonar:sonar -Dsonar.projectKey=spring-petclinic
+  only:
+    - main
+  dependencies:
+    - test
+
+package:
+  stage: package
+  script:
+    - mvn package
+    - mvn deploy
+  only:
+    - main
+  dependencies:
+    - compile
+    - test
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
